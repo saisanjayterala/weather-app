@@ -1,64 +1,94 @@
-const apiKey = 'e4d9851448dfb9935dff83bf34def32d';
+const apiKey = 'API_KEY_HERE';
 const searchForm = document.getElementById('search-form');
 const cityInput = document.getElementById('city-input');
 const cityName = document.getElementById('city-name');
 const weatherIcon = document.getElementById('weather-icon');
 const temperature = document.getElementById('temperature');
+const feelsLike = document.getElementById('feels-like');
 const description = document.getElementById('description');
 const humidity = document.getElementById('humidity');
 const windSpeed = document.getElementById('wind-speed');
 const pressure = document.getElementById('pressure');
-const forecast = document.getElementById('forecast');
+const visibility = document.getElementById('visibility');
+const forecastItems = document.getElementById('forecast-items');
+const unitToggle = document.getElementById('unit-toggle');
+const themeToggle = document.getElementById('theme-toggle');
+const loadingOverlay = document.getElementById('loading-overlay');
+
+let units = 'metric';
+let isDarkTheme = false;
 
 searchForm.addEventListener('submit', function(e) {
     e.preventDefault();
     const city = cityInput.value.trim();
     if (city) {
+        showLoading();
         getWeatherData(city);
         getForecastData(city);
     }
 });
 
+unitToggle.addEventListener('click', function() {
+    units = units === 'metric' ? 'imperial' : 'metric';
+    const city = cityName.textContent;
+    if (city) {
+        showLoading();
+        getWeatherData(city);
+        getForecastData(city);
+    }
+});
+
+themeToggle.addEventListener('click', function() {
+    isDarkTheme = !isDarkTheme;
+    document.body.classList.toggle('dark-theme');
+});
+
 function getWeatherData(city) {
-    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=${units}&appid=${apiKey}`;
 
     fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
             displayWeatherData(data);
+            hideLoading();
         })
         .catch(error => {
             console.error('Error fetching weather data:', error);
             alert('Error fetching weather data. Please try again.');
+            hideLoading();
         });
 }
 
 function getForecastData(city) {
-    const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`;
+    const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=${units}&appid=${apiKey}`;
 
     fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
             displayForecastData(data);
+            hideLoading();
         })
         .catch(error => {
             console.error('Error fetching forecast data:', error);
             alert('Error fetching forecast data. Please try again.');
+            hideLoading();
         });
 }
 
 function displayWeatherData(data) {
-    cityName.textContent = data.name;
+    cityName.textContent = `${data.name}, ${data.sys.country}`;
     weatherIcon.innerHTML = `<i class="fas fa-${getWeatherIcon(data.weather[0].icon)}"></i>`;
-    temperature.textContent = `${Math.round(data.main.temp)}°C`;
+    temperature.textContent = `${Math.round(data.main.temp)}°${units === 'metric' ? 'C' : 'F'}`;
+    feelsLike.textContent = `Feels like: ${Math.round(data.main.feels_like)}°${units === 'metric' ? 'C' : 'F'}`;
     description.textContent = data.weather[0].description;
     humidity.textContent = `${data.main.humidity}%`;
-    windSpeed.textContent = `${data.wind.speed} m/s`;
+    windSpeed.textContent = `${data.wind.speed} ${units === 'metric' ? 'm/s' : 'mph'}`;
     pressure.textContent = `${data.main.pressure} hPa`;
+    visibility.textContent = `${data.visibility / 1000} km`;
 }
 
 function displayForecastData(data) {
-    forecast.innerHTML = '';
+    forecastItems.innerHTML = '';
     for (let i = 0; i < data.list.length; i += 8) {
         const forecastItem = data.list[i];
         const date = new Date(forecastItem.dt * 1000);
@@ -69,9 +99,10 @@ function displayForecastData(data) {
         forecastItemElement.innerHTML = `
             <p>${dayName}</p>
             <i class="fas fa-${getWeatherIcon(forecastItem.weather[0].icon)}"></i>
-            <p>${Math.round(forecastItem.main.temp)}°C</p>
+            <p>${Math.round(forecastItem.main.temp)}°${units === 'metric' ? 'C' : 'F'}</p>
+            <p>${forecastItem.weather[0].description}</p>
         `;
-        forecast.appendChild(forecastItemElement);
+        forecastItems.appendChild(forecastItemElement);
     }
 }
 
@@ -98,3 +129,15 @@ function getWeatherIcon(iconCode) {
     };
     return iconMap[iconCode] || 'question';
 }
+
+function showLoading() {
+    loadingOverlay.style.display = 'flex';
+}
+
+function hideLoading() {
+    loadingOverlay.style.display = 'none';
+}
+
+// Initialize with a default city
+getWeatherData('Hyderabad');
+getForecastData('Hyderabad');
