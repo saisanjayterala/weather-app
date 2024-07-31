@@ -1,4 +1,4 @@
-const apiKey = 'API_KEY_HERE';
+const apiKey = 'e4d9851448dfb9935dff83bf34def32d';
 const searchForm = document.getElementById('search-form');
 const cityInput = document.getElementById('city-input');
 const cityName = document.getElementById('city-name');
@@ -18,66 +18,63 @@ const loadingOverlay = document.getElementById('loading-overlay');
 let units = 'metric';
 let isDarkTheme = false;
 
-searchForm.addEventListener('submit', function(e) {
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const lastSearchedCity = localStorage.getItem('lastSearchedCity') || 'Hyderabad';
+    cityInput.value = lastSearchedCity;
+    getWeatherData(lastSearchedCity);
+
+    searchForm.addEventListener('submit', handleSearch);
+    unitToggle.addEventListener('click', handleUnitToggle);
+    themeToggle.addEventListener('click', handleThemeToggle);
+});
+
+function handleSearch(e) {
     e.preventDefault();
     const city = cityInput.value.trim();
     if (city) {
-        showLoading();
         getWeatherData(city);
-        getForecastData(city);
+        localStorage.setItem('lastSearchedCity', city);
     }
-});
+}
 
-unitToggle.addEventListener('click', function() {
+function handleUnitToggle() {
     units = units === 'metric' ? 'imperial' : 'metric';
-    const city = cityName.textContent;
+    const city = cityName.textContent.split(',')[0];
     if (city) {
-        showLoading();
         getWeatherData(city);
-        getForecastData(city);
     }
-});
+}
 
-themeToggle.addEventListener('click', function() {
+function handleThemeToggle() {
     isDarkTheme = !isDarkTheme;
     document.body.classList.toggle('dark-theme');
-});
+}
 
 function getWeatherData(city) {
-    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=${units}&appid=${apiKey}`;
+    showLoading();
+    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=${units}&appid=${apiKey}`;
+    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=${units}&appid=${apiKey}`;
 
-    fetch(apiUrl)
-        .then(response => response.json())
-        .then(data => {
-            displayWeatherData(data);
-            hideLoading();
-        })
-        .catch(error => {
-            console.error('Error fetching weather data:', error);
-            alert('Error fetching weather data. Please try again.');
-            hideLoading();
-        });
+    Promise.all([
+        fetch(weatherUrl).then(response => response.json()),
+        fetch(forecastUrl).then(response => response.json())
+    ])
+    .then(([weatherData, forecastData]) => {
+        displayCurrentWeather(weatherData);
+        displayForecast(forecastData);
+        hideLoading();
+    })
+    .catch(error => {
+        console.error('Error fetching weather data:', error);
+        alert('Error fetching weather data. Please try again.');
+        hideLoading();
+    });
 }
 
-function getForecastData(city) {
-    const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=${units}&appid=${apiKey}`;
-
-    fetch(apiUrl)
-        .then(response => response.json())
-        .then(data => {
-            displayForecastData(data);
-            hideLoading();
-        })
-        .catch(error => {
-            console.error('Error fetching forecast data:', error);
-            alert('Error fetching forecast data. Please try again.');
-            hideLoading();
-        });
-}
-
-function displayWeatherData(data) {
+function displayCurrentWeather(data) {
     cityName.textContent = `${data.name}, ${data.sys.country}`;
-    weatherIcon.innerHTML = `<i class="fas fa-${getWeatherIcon(data.weather[0].icon)}"></i>`;
+    weatherIcon.innerHTML = `<img src="http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="${data.weather[0].description}">`;
     temperature.textContent = `${Math.round(data.main.temp)}°${units === 'metric' ? 'C' : 'F'}`;
     feelsLike.textContent = `Feels like: ${Math.round(data.main.feels_like)}°${units === 'metric' ? 'C' : 'F'}`;
     description.textContent = data.weather[0].description;
@@ -87,47 +84,20 @@ function displayWeatherData(data) {
     visibility.textContent = `${data.visibility / 1000} km`;
 }
 
-function displayForecastData(data) {
+function displayForecast(data) {
     forecastItems.innerHTML = '';
-    for (let i = 0; i < data.list.length; i += 8) {
-        const forecastItem = data.list[i];
-        const date = new Date(forecastItem.dt * 1000);
-        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-        
-        const forecastItemElement = document.createElement('div');
-        forecastItemElement.classList.add('forecast-item');
-        forecastItemElement.innerHTML = `
-            <p>${dayName}</p>
-            <i class="fas fa-${getWeatherIcon(forecastItem.weather[0].icon)}"></i>
-            <p>${Math.round(forecastItem.main.temp)}°${units === 'metric' ? 'C' : 'F'}</p>
-            <p>${forecastItem.weather[0].description}</p>
+    const dailyData = data.list.filter(item => item.dt_txt.includes('12:00:00'));
+    dailyData.forEach(day => {
+        const forecastItem = document.createElement('div');
+        forecastItem.classList.add('forecast-item');
+        forecastItem.innerHTML = `
+            <p>${new Date(day.dt * 1000).toLocaleDateString('en-US', {weekday: 'short'})}</p>
+            <img src="http://openweathermap.org/img/wn/${day.weather[0].icon}.png" alt="${day.weather[0].description}">
+            <p>${Math.round(day.main.temp)}°${units === 'metric' ? 'C' : 'F'}</p>
+            <p>${day.weather[0].description}</p>
         `;
-        forecastItems.appendChild(forecastItemElement);
-    }
-}
-
-function getWeatherIcon(iconCode) {
-    const iconMap = {
-        '01d': 'sun',
-        '01n': 'moon',
-        '02d': 'cloud-sun',
-        '02n': 'cloud-moon',
-        '03d': 'cloud',
-        '03n': 'cloud',
-        '04d': 'cloud',
-        '04n': 'cloud',
-        '09d': 'cloud-showers-heavy',
-        '09n': 'cloud-showers-heavy',
-        '10d': 'cloud-sun-rain',
-        '10n': 'cloud-moon-rain',
-        '11d': 'bolt',
-        '11n': 'bolt',
-        '13d': 'snowflake',
-        '13n': 'snowflake',
-        '50d': 'smog',
-        '50n': 'smog'
-    };
-    return iconMap[iconCode] || 'question';
+        forecastItems.appendChild(forecastItem);
+    });
 }
 
 function showLoading() {
@@ -137,7 +107,3 @@ function showLoading() {
 function hideLoading() {
     loadingOverlay.style.display = 'none';
 }
-
-// Initialize with a default city
-getWeatherData('Hyderabad');
-getForecastData('Hyderabad');

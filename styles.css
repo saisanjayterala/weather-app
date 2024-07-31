@@ -3,6 +3,8 @@
     --secondary-color: #f0f8ff;
     --text-color: #333;
     --background-color: #fff;
+    --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
 }
 
 body {
@@ -11,13 +13,19 @@ body {
     padding: 0;
     background-color: var(--background-color);
     color: var(--text-color);
-    transition: background-color 0.3s, color 0.3s;
+    transition: var(--transition);
 }
 
 .container {
     max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
+    animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 header {
@@ -25,11 +33,17 @@ header {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+    padding: 20px;
+    background-color: var(--secondary-color);
+    border-radius: 10px;
+    box-shadow: var(--box-shadow);
 }
 
 h1 {
     color: var(--primary-color);
     margin: 0;
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
 nav ul {
@@ -46,6 +60,13 @@ nav ul li a {
     color: var(--primary-color);
     text-decoration: none;
     cursor: pointer;
+    font-weight: bold;
+    transition: var(--transition);
+}
+
+nav ul li a:hover {
+    color: #1873cc;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
 #search-form {
@@ -58,8 +79,14 @@ nav ul li a {
     padding: 12px;
     font-size: 16px;
     width: 70%;
-    border: 1px solid #ddd;
+    border: 2px solid var(--primary-color);
     border-radius: 5px 0 0 5px;
+    transition: var(--transition);
+}
+
+#city-input:focus {
+    outline: none;
+    box-shadow: 0 0 5px var(--primary-color);
 }
 
 #search-button {
@@ -70,26 +97,40 @@ nav ul li a {
     border: none;
     cursor: pointer;
     border-radius: 0 5px 5px 0;
-    transition: background-color 0.3s;
+    transition: var(--transition);
 }
 
 #search-button:hover {
     background-color: #1873cc;
+    transform: scale(1.05);
 }
 
 #weather-info {
     background-color: var(--secondary-color);
     border-radius: 10px;
     padding: 30px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow);
     text-align: center;
     margin-bottom: 30px;
+    transition: var(--transition);
+}
+
+#weather-info:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
 #weather-icon {
     font-size: 64px;
     margin-bottom: 20px;
     color: var(--primary-color);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
 }
 
 .weather-details {
@@ -102,6 +143,11 @@ nav ul li a {
 .weather-details div {
     text-align: center;
     margin: 10px;
+    transition: var(--transition);
+}
+
+.weather-details div:hover {
+    transform: scale(1.1);
 }
 
 .weather-details i {
@@ -114,13 +160,20 @@ nav ul li a {
     background-color: var(--secondary-color);
     border-radius: 10px;
     padding: 30px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+}
+
+#forecast:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
 #forecast h3 {
     text-align: center;
     margin-top: 0;
     color: var(--primary-color);
+    font-size: 1.5em;
 }
 
 #forecast-items {
@@ -135,14 +188,21 @@ nav ul li a {
     padding: 15px;
     margin-top: 15px;
     text-align: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow);
     flex-basis: calc(20% - 20px);
+    transition: var(--transition);
+}
+
+.forecast-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
 footer {
     text-align: center;
     margin-top: 30px;
     color: #777;
+    font-size: 0.9em;
 }
 
 #loading-overlay {
@@ -156,7 +216,14 @@ footer {
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    display: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+#loading-overlay.show {
+    opacity: 1;
+    pointer-events: all;
 }
 
 .spinner {
@@ -178,4 +245,5 @@ footer {
     --secondary-color: #2c3e50;
     --text-color: #ecf0f1;
     --background-color: #34495e;
+    --box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
 }
